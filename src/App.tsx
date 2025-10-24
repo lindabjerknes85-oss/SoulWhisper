@@ -7,6 +7,8 @@ import { SignupPage } from './pages/SignupPage';
 import { PricingPage } from './pages/PricingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SuccessPage } from './pages/SuccessPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { PrivacyPage } from './pages/PrivacyPage';
 import { AuthModal } from './components/AuthModal';
 import { LoginForm } from './components/Auth/LoginForm';
 import { SignupForm } from './components/Auth/SignupForm';
@@ -240,8 +242,13 @@ function HomePage() {
         </div>
 
         <footer className="border-t border-slate-700/50 mt-16 py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400 space-y-2">
             <p>© 2025 Soul Whisper. Generate smarter, not harder.</p>
+            <div className="flex justify-center gap-6 text-sm">
+              <a href="/privacy" className="hover:text-white transition-colors">
+                Privacy Policy
+              </a>
+            </div>
           </div>
         </footer>
       </div>
@@ -260,6 +267,8 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/success" element={<SuccessPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route
             path="/dashboard"
             element={

@@ -9,19 +9,38 @@ type AuthModalProps = {
 
 export function AuthModal({ onClose }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
   const { signUp, signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
+      if (isForgotPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
+
+        setSuccess('Password reset email sent! Check your inbox.');
+        setLoading(false);
+        return;
+      }
+
       if (isSignUp) {
         const { error } = await signUp(email, password, fullName);
         if (error) {
@@ -65,7 +84,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
         </button>
 
         <h2 className="text-2xl font-bold text-white mb-6">
-          {isSignUp ? 'Create Account' : 'Welcome Back'}
+          {isForgotPassword ? 'Reset Password' : isSignUp ? 'Create Account' : 'Welcome Back'}
         </h2>
 
         {error && (
@@ -74,8 +93,14 @@ export function AuthModal({ onClose }: AuthModalProps) {
           </div>
         )}
 
+        {success && (
+          <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-lg mb-4">
+            {success}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
+          {!isForgotPassword && isSignUp && (
             <div>
               <label className="block text-slate-300 mb-2 text-sm font-medium">
                 Full Name
@@ -104,39 +129,61 @@ export function AuthModal({ onClose }: AuthModalProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-slate-300 mb-2 text-sm font-medium">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-          </div>
+          {!isForgotPassword && (
+            <div>
+              <label className="block text-slate-300 mb-2 text-sm font-medium">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                placeholder="••••••••"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
           >
-            {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+            {loading ? 'Loading...' : isForgotPassword ? 'Send Reset Link' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-3">
+          {!isForgotPassword && !isSignUp && (
+            <button
+              onClick={() => {
+                setIsForgotPassword(true);
+                setError('');
+                setSuccess('');
+              }}
+              className="w-full text-cyan-400 hover:text-cyan-300 transition-colors text-sm"
+            >
+              Forgot password?
+            </button>
+          )}
+
           <button
             onClick={() => {
-              setIsSignUp(!isSignUp);
+              if (isForgotPassword) {
+                setIsForgotPassword(false);
+              } else {
+                setIsSignUp(!isSignUp);
+              }
               setError('');
+              setSuccess('');
             }}
             className="text-cyan-400 hover:text-cyan-300 transition-colors"
           >
-            {isSignUp
+            {isForgotPassword
+              ? 'Back to Sign In'
+              : isSignUp
               ? 'Already have an account? Sign in'
               : "Don't have an account? Sign up"}
           </button>

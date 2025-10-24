@@ -78,12 +78,15 @@ export function DashboardPage() {
           setSubscription(subscriptionData);
         }
 
-        const { data: plansData } = await supabase
+        const { data: plansData, error: plansError } = await supabase
           .from('subscription_plans')
           .select('*')
           .order('price_monthly', { ascending: true });
 
-        if (plansData) {
+        if (plansError) {
+          console.error('Error fetching plans:', plansError);
+        } else if (plansData) {
+          console.log('Loaded plans with payment links:', plansData);
           setPlans(plansData);
         }
 
@@ -115,6 +118,9 @@ export function DashboardPage() {
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setError(`Failed to load data: ${errorMessage}. Please check your internet connection and try again.`);
+        setDebugInfo(`Error type: ${error instanceof Error ? error.constructor.name : typeof error}, Message: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
@@ -129,7 +135,13 @@ export function DashboardPage() {
       return;
     }
 
-    window.location.href = paymentLink;
+    console.log('Opening payment link:', paymentLink);
+    try {
+      window.location.href = paymentLink;
+    } catch (err) {
+      console.error('Error opening payment link:', err);
+      setError('Failed to open payment page. Please try again or contact support.');
+    }
   };
 
   const getPlanName = (priceId: string | null) => {
@@ -804,7 +816,17 @@ Ikke vær en av de som angrer på at de ventet for lenge. Invester i ${prompt} i
               {error && (
                 <div className="bg-red-900/50 border border-red-500 rounded-lg p-4 mb-4">
                   <h3 className="text-red-200 font-semibold mb-2">Error:</h3>
-                  <p className="text-red-100 text-sm break-words">{error}</p>
+                  <p className="text-red-100 text-sm break-words mb-4">{error}</p>
+                  <button
+                    onClick={() => {
+                      setError('');
+                      setDebugInfo('');
+                      window.location.reload();
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Retry / Reload Page
+                  </button>
                 </div>
               )}
               {debugInfo && (
@@ -813,6 +835,18 @@ Ikke vær en av de som angrer på at de ventet for lenge. Invester i ${prompt} i
                   <p className="text-blue-100 text-sm break-words font-mono">{debugInfo}</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {plans.length === 0 && (
+            <div className="bg-yellow-900/50 border border-yellow-500 rounded-lg p-4 mb-6">
+              <p className="text-yellow-100 text-sm">Loading plans...</p>
+            </div>
+          )}
+
+          {plans.length > 0 && plans.filter(plan => plan.tier !== 'free').length === 0 && (
+            <div className="bg-yellow-900/50 border border-yellow-500 rounded-lg p-4 mb-6">
+              <p className="text-yellow-100 text-sm">No upgrade plans available. Please contact support.</p>
             </div>
           )}
 
